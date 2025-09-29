@@ -7,10 +7,12 @@ import { isApiError } from "../utils/apiError";
 import { HttpStatus } from "../utils/httpStatus";
 import { createLogger } from "../utils/logger";
 
-export async function registerController(req: Request<{}, {}, RegisterRequest>, res: Response) {
+export async function registerController(req: Request, res: Response) {
   const logger = createLogger("register-controller");
   try {
-    const result = await AuthService.registerService(req.body);
+    const { username, email, password, name} = req.body;
+    const result = await AuthService.registerService(username, email, password, name);
+    
     return res.status(HttpStatus.CREATED).json({
       message: "Registrasi berhasil",
       data: result,

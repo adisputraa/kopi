@@ -6,10 +6,12 @@ import { LoginRequest, RegisterRequest } from '../schemas/auth.schema';
 import { createApiError } from '../utils/apiError';
 import { HttpStatus } from '../utils/httpStatus';
 
-export async function registerService(data: RegisterRequest) {
-  const { username, email, password, name } = data;
-
-  // 1. Cek duplikasi username atau email
+export async function registerService(
+  username: string,
+  email: string,
+  password: string,
+  name: string
+) {
   const existingUserByUsername = await UserRepository.findUserByUsername(username);
   if (existingUserByUsername) {
     throw createApiError("Username sudah terdaftar", HttpStatus.CONFLICT);
@@ -19,18 +21,14 @@ export async function registerService(data: RegisterRequest) {
     throw createApiError("Email sudah terdaftar", HttpStatus.CONFLICT);
   }
 
-  // 2. Hash password
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // 3. Buat user baru
-  const newUser = await UserRepository.createUser({
+  return UserRepository.createUser({
     username,
     name,
     email,
     password: hashedPassword,
   });
-
-  return newUser;
 }
 
 export async function loginService(data: LoginRequest) {

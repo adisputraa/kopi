@@ -23,16 +23,15 @@ export async function registerService(
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  return UserRepository.createUser({
+  return UserRepository.createUser(
     username,
     name,
     email,
-    password: hashedPassword,
-  });
+    hashedPassword
+  );
 }
 
-export async function loginService(data: LoginRequest) {
-  const { username, password} = data;
+export async function loginService(username: string, password: string) {
 
   const user = await UserRepository.findUserByUsername(username);
   if (!user) {
@@ -52,8 +51,14 @@ export async function loginService(data: LoginRequest) {
   const token = jwt.sign(
     payload,
     process.env.SECRET_JWT_TOKEN as string,
-    { expiresIn: "24h"}
+    { expiresIn: "30m"}
   );
 
-  return { token };
+  const refreshToken = jwt.sign(
+    payload,
+    process.env.SECRET_JWT_REFRESH_TOKEN as string,
+    { expiresIn: "7d"}
+  )
+
+  return { token, refreshToken };
 }

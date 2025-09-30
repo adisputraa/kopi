@@ -27,14 +27,19 @@ export async function findById(id: string) {
   });
 }
 
-export async function createUser(data: {
+export async function createUser(
   username: string,
   name: string,
   email: string,
   password: string
-}) {
+) {
   return prisma.users.create({
-    data,
+    data: {
+      username,
+      name,
+      email,
+      password,
+    },
     select: {
       id: true,
       username: true,

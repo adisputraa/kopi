@@ -30,8 +30,13 @@ export async function registerController(req: Request, res: Response) {
 export async function loginController(req: Request<{}, {}, LoginRequest>, res: Response) {
   const logger = createLogger("login-controller");
   try {
-    const result = await AuthService.loginService(req.body);
-    return res.status(HttpStatus.OK).json(result);
+    const { username, password} = req.body;
+    const result = await AuthService.loginService(username, password);
+    
+    return res.status(HttpStatus.OK).json({
+      message: "Login berhasil",
+      data: result
+    });
   } catch (error) {
     if (isApiError(error)) {
       logger.warn("Login attempt failed", { error });

@@ -23,6 +23,17 @@ model users {
   role      String   @default("USER")
   createdAt DateTime @default(now())
   updateAt  DateTime @updatedAt
+  asswordResetTokens PasswordResetToken[]
 
   @@map("users")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+
+  @@map("password_reset_tokens")
 }

@@ -62,3 +62,10 @@ export async function findUserByEmail(email: string) {
     where: { email },
   });
 }
+
+export async function updateUserPassword(userId:string, hashedPassword:string) {
+  return await prisma.users.update({
+    where: {id: userId},
+    data: {password: hashedPassword}
+  });
+}

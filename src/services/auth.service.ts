@@ -1,10 +1,13 @@
 import * as bcrypt from "bcrypt";
 import * as jwt from "jsonwebtoken";
+import cryto from "crypto";
 
 import * as UserRepository from '../repositories/users.repository';
+import * as PasswordResetRepository from "../repositories/passwordReset.repository"
 import { LoginRequest, RegisterRequest } from '../schemas/auth.schema';
 import { createApiError } from '../utils/apiError';
 import { HttpStatus } from '../utils/httpStatus';
+import { sendPasswordResetEmail } from "../utils/sendEmail";
 
 export async function registerService(
   username: string,
@@ -59,6 +62,43 @@ export async function loginService(username: string, password: string) {
     process.env.SECRET_JWT_REFRESH_TOKEN as string,
     { expiresIn: "7d"}
   )
+  console.log("JWT_TOKEN:", process.env.SECRET_JWT_TOKEN);
+  console.log("JWT_REFRESH_TOKEN:", process.env.SECRET_JWT_REFRESH_TOKEN);
+
 
   return { token, refreshToken };
+}
+
+export async function forgotPasswordService(email:string) {
+
+  const user = await UserRepository.findUserByEmail(email);
+  if (!user) {
+    return;
+  }
+  
+  const resetToken = cryto.randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 menit
+
+  await PasswordResetRepository.createResetToken(user.id, resetToken, expiresAt);
+
+  const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
+  console.log(">> SENDING PASSWORD RESET EMAIL TO:", user.email, "URL:", resetUrl);
+  await sendPasswordResetEmail(user.email, resetUrl);
+}
+
+export async function resetPasswordService(token:string, password:string) {
+  const savedToken = await PasswordResetRepository.findResetToken(token);
+  if (!savedToken) {
+    throw createApiError("Token tidak valid", HttpStatus.BAD_REQUEST);
+  }
+
+  if (new Date() > savedToken.expiresAt) {
+    throw createApiError("Token sudah kadaluwarsa", HttpStatus.BAD_REQUEST);
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  await UserRepository.updateUserPassword(savedToken.userId, hashedPassword);
+
+  await PasswordResetRepository.deleteResetToken(savedToken.id);
 }

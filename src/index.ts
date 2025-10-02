@@ -5,6 +5,7 @@ import app from "./app";
 import { logger } from "./utils/logger";
 
 config();
+console.log("JWT TOKEN:", process.env.SECRET_JWT_TOKEN);
 
 const PORT = process.env.PORT || 3000;
 
